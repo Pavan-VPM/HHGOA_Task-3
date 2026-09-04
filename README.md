@@ -90,13 +90,24 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 2. Run the Full Automated Demo (with Tamper Audit)
+## 🖥️ Web Dashboard (Interactive Frontend)
 
-The `demo` command runs the entire pipeline end-to-end, deploys the smart contract, anchors the record, re-verifies it, and performs simulated adversary tampering to prove cryptographic rejection:
+A modern, glassmorphic dark-themed web interface is included for visual interaction and tamper testing:
 
 ```bash
-python main.py demo
+# Start the web dashboard (runs on http://localhost:3000)
+npm run dev
+# or
+python server.py
 ```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser:
+- **Interactive Face Scanner**: Drag & drop custom photos or select test portraits with real-time laser scanning animations.
+- **Pipeline Stepper**: Visual progress tracker through detection, social discovery, and EVM anchoring.
+- **Biometrics & Social Post Card**: Displays facial confidence, 128-d descriptor, dHash, and discovered Twitter/Reddit/LinkedIn post snippet.
+- **On-Chain Audit & Tamper Lab**:
+  - Click **Re-Verify Authentic State** to prove cryptographic integrity on the smart contract.
+  - Click **Simulate Adversary Attack** to modify post content in real time and watch the blockchain smart contract detect and reject the altered data!
 
 Sample output:
 ```text
