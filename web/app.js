@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Run full pipeline
   runBtn.addEventListener('click', async () => {
     runBtn.disabled = true;
-    runBtn.innerHTML = '<span class="btn-text">Processing Pipeline...</span><span class="btn-icon">⏳</span>';
+    runBtn.innerHTML = '<span class="btn-text">Creating proof record...</span><span class="btn-icon">⌛</span>';
     setStep(1);
 
     try {
@@ -127,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('postAuthor').textContent = post.author;
       document.getElementById('postText').textContent = post.text;
       document.getElementById('postUrl').href = post.url;
+      document.getElementById('postUrl').textContent = `Open Post on ${post.platform.toUpperCase()} ↗`;
+      document.getElementById('postUrl').target = '_blank';
+      document.getElementById('postUrl').rel = 'noopener noreferrer';
       document.getElementById('matchScore').textContent = `${(post.match_confidence * 100).toFixed(1)}% Match`;
       document.getElementById('postHashDisplay').textContent = truncateHash(state.post_hash);
       document.getElementById('postHashDisplay').title = state.post_hash;
@@ -143,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       setStep(4);
       tamperReport.innerHTML = `
         <div class="audit-entry success">
-          <span>✅ <strong>On-Chain Confirmation:</strong> Face and post anchored in Block #${state.block_number}.</span>
+          <span>✓ <strong>On-chain confirmation:</strong> Source and reference anchored in Block #${state.block_number}.</span>
           <span class="font-mono">${new Date(state.timestamp * 1000).toLocaleTimeString()}</span>
         </div>
       `;
@@ -152,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Error running pipeline: ' + err.message);
     } finally {
       runBtn.disabled = false;
-      runBtn.innerHTML = '<span class="btn-text">Execute Full Pipeline</span><span class="btn-icon">⚡</span>';
+      runBtn.innerHTML = '<span class="btn-text">Create proof record</span><span class="btn-icon">→</span>';
     }
   });
 

@@ -3,215 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FaceBiometrics & Blockchain Verification Pipeline</title>
+  <title>Proofline | Evidence verification</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="background-glows">
-    <div class="glow-orb orb-1"></div>
-    <div class="glow-orb orb-2"></div>
-    <div class="glow-orb orb-3"></div>
-  </div>
-
+  <div class="page-grain"></div>
   <div class="app-container">
-    <!-- Header -->
     <header class="header">
-      <div class="brand">
-        <div class="logo-badge">
-          <span class="logo-icon">👁️</span>
-          <span class="logo-chain">⛓️</span>
-        </div>
-        <div>
-          <h1>Face<span class="highlight">Ledger</span></h1>
-          <p class="subtitle">Biometric Face Identification → Social Media Discovery → EVM Blockchain Verification</p>
-        </div>
-      </div>
-      <div class="chain-status-badge">
-        <span class="pulse-dot"></span>
-        <span id="chainNetwork">Local EVM Active</span>
-        <span class="block-counter" id="blockHeight">Block #2</span>
-      </div>
+      <a class="brand" href="#top" aria-label="Proofline home"><span class="brand-mark"><i></i><i></i><i></i></span><span>proofline<span class="brand-dot">.</span></span></a>
+      <div class="chain-status-badge"><span class="pulse-dot"></span><span id="chainNetwork">Local EVM online</span><span class="block-counter" id="blockHeight">Block #2</span></div>
     </header>
-
-    <!-- Pipeline Step Indicators -->
-    <div class="pipeline-stepper">
-      <div class="step-node active" id="step1-indicator">
-        <div class="step-num">01</div>
-        <div class="step-label">Face Scan</div>
+    <main id="top">
+      <section class="intro"><p class="eyebrow">Evidence integrity workspace</p><h1>Make digital evidence<br><em>stand up to scrutiny.</em></h1><p class="intro-copy">Create a tamper-evident proof trail for consented media and its discovered reference. Every record is fingerprinted and anchored to an EVM ledger.</p></section>
+      <div class="pipeline-stepper" aria-label="Pipeline progress">
+        <div class="step-node active" id="step1-indicator"><span class="step-num">01</span><span class="step-label">Input</span></div><div class="step-connector" id="conn1"></div>
+        <div class="step-node" id="step2-indicator"><span class="step-num">02</span><span class="step-label">Discover</span></div><div class="step-connector" id="conn2"></div>
+        <div class="step-node" id="step3-indicator"><span class="step-num">03</span><span class="step-label">Anchor</span></div><div class="step-connector" id="conn3"></div>
+        <div class="step-node" id="step4-indicator"><span class="step-num">04</span><span class="step-label">Verify</span></div>
       </div>
-      <div class="step-connector" id="conn1"></div>
-      <div class="step-node" id="step2-indicator">
-        <div class="step-num">02</div>
-        <div class="step-label">Social Discovery</div>
+      <div class="dashboard-grid">
+        <section class="input-card" aria-labelledby="input-title">
+          <div class="section-heading"><span class="section-index">A</span><div><p class="eyebrow">Source material</p><h2 id="input-title">Add an evidence image</h2></div></div>
+          <div class="upload-zone" id="dropZone"><input type="file" id="fileInput" accept="image/*" class="file-hidden"><div class="preview-wrapper" id="previewContainer"><img id="facePreview" src="/samples/test_face_1.jpg" alt="Selected evidence image"><div class="scan-overlay"><div class="scanner-laser"></div><div class="face-target-box" id="targetBox"></div></div><span class="image-state">Ready to process</span></div><p class="upload-hint">Drop an image here or <span class="browse-link">choose a file</span></p></div>
+          <div class="sample-section"><label class="section-label">Demo assets</label><div class="sample-pills" id="samplePills"></div></div>
+          <div class="form-group"><label for="queryInput" class="section-label">Reference search</label><div class="query-input-wrap"><input type="text" id="queryInput" value="Satya Nadella" placeholder="Enter a reference or consented dataset label"></div><div class="quick-tags"><button type="button" class="tag-btn" data-query="Satya Nadella">Satya Nadella</button><button type="button" class="tag-btn" data-query="Sundar Pichai">Sundar Pichai</button><button type="button" class="tag-btn" data-query="Elon Musk">Elon Musk</button></div></div>
+          <button id="runBtn" class="btn btn-primary"><span class="btn-text">Create proof record</span><span class="btn-icon">→</span></button><p class="consent-note">Use only media and reference data you are authorized to process.</p>
+        </section>
+        <section class="results-column" aria-label="Verification results">
+          <div class="results-header"><div><p class="eyebrow">Proof record</p><h2>Live evidence trail</h2></div><span class="ready-label">System ready</span></div>
+          <div class="two-col-grid">
+            <article class="card mini-card" id="cardBiometrics"><div class="card-header"><h3><span class="card-icon">01</span> Source fingerprint</h3><span class="status-tag" id="bioStatus">Ready</span></div><div class="metric-row"><span class="metric-lbl">Image accepted</span><span class="metric-val" id="bioDetected">True (95.0%)</span></div><div class="metric-row"><span class="metric-lbl">Feature vector</span><span class="metric-val font-mono">128-d normalized</span></div><div class="metric-row"><span class="metric-lbl">Visual fingerprint</span><span class="metric-val font-mono" id="bioDhash">336155170b170f0e</span></div><div class="hash-chip"><span class="chip-label">SHA-256 source hash</span><span class="chip-value font-mono" id="faceHashDisplay">0xac0683e1...3760</span></div></article>
+            <article class="card mini-card" id="cardSocial"><div class="card-header"><h3><span class="card-icon">02</span> Discovered reference</h3><span class="status-tag tag-verified" id="socialPlatform">Twitter/X</span></div><div class="post-preview-card"><div class="post-author" id="postAuthor">@twitter_user</div><p class="post-text" id="postText">"A matching reference will appear here after discovery."</p><div class="post-footer"><a href="https://twitter.com/satyanadella" target="_blank" rel="noopener" id="postUrl" class="post-link">Open source <span>↗</span></a><span class="match-score" id="matchScore">85% match</span></div></div><div class="hash-chip"><span class="chip-label">Content hash</span><span class="chip-value font-mono" id="postHashDisplay">0x73007504...b484</span></div></article>
+          </div>
+          <article class="card" id="cardBlockchain"><div class="card-header"><h3><span class="card-icon">03</span> Ledger anchor</h3><span class="status-tag tag-success" id="chainConfirmStatus">On-chain confirmed</span></div><div class="blockchain-details-grid"><div class="detail-box"><span class="detail-lbl">Transaction</span><span class="detail-val font-mono" id="txHashDisplay">0x024055...9428</span></div><div class="detail-box"><span class="detail-lbl">Contract</span><span class="detail-val font-mono" id="contractAddrDisplay">0xF2E246...395b</span></div><div class="detail-box"><span class="detail-lbl">Proof root</span><span class="detail-val font-mono" id="merkleRootDisplay">0x5442b2...0275</span></div><div class="detail-box"><span class="detail-lbl">Confirmation</span><span class="detail-val" id="blockTimeDisplay">Block #2 (confirmed)</span></div></div></article>
+        </section>
       </div>
-      <div class="step-connector" id="conn2"></div>
-      <div class="step-node" id="step3-indicator">
-        <div class="step-num">03</div>
-        <div class="step-label">EVM Anchor</div>
-      </div>
-      <div class="step-connector" id="conn3"></div>
-      <div class="step-node" id="step4-indicator">
-        <div class="step-num">04</div>
-        <div class="step-label">Tamper Audit</div>
-      </div>
-    </div>
-
-    <!-- Main Grid -->
-    <main class="dashboard-grid">
-      <!-- Left Column: Controls & Input -->
-      <section class="card input-card">
-        <h2 class="card-title"><span>👤</span> Input Face Scan</h2>
-        
-        <!-- Image Preview & Upload Box -->
-        <div class="upload-zone" id="dropZone">
-          <input type="file" id="fileInput" accept="image/*" class="file-hidden">
-          <div class="preview-wrapper" id="previewContainer">
-            <img id="facePreview" src="/samples/test_face_1.jpg" alt="Input Face Scan">
-            <div class="scan-overlay">
-              <div class="scanner-laser"></div>
-              <div class="face-target-box" id="targetBox"></div>
-            </div>
-          </div>
-          <p class="upload-hint">Drop an image here or <span class="browse-link">browse</span></p>
-        </div>
-
-        <!-- Sample Face Selector -->
-        <div class="sample-section">
-          <label class="section-label">Quick Test Portraits:</label>
-          <div class="sample-pills" id="samplePills">
-            <!-- Dynamically populated -->
-          </div>
-        </div>
-
-        <!-- Search Query Input -->
-        <div class="form-group">
-          <label for="queryInput" class="section-label">Social Media Search Target:</label>
-          <div class="query-input-wrap">
-            <input type="text" id="queryInput" value="Satya Nadella" placeholder="e.g. Satya Nadella, Elon Musk...">
-          </div>
-          <div class="quick-tags">
-            <button type="button" class="tag-btn" data-query="Satya Nadella">Satya Nadella</button>
-            <button type="button" class="tag-btn" data-query="Sundar Pichai">Sundar Pichai</button>
-            <button type="button" class="tag-btn" data-query="Elon Musk">Elon Musk</button>
-          </div>
-        </div>
-
-        <!-- Action Button -->
-        <button id="runBtn" class="btn btn-primary">
-          <span class="btn-text">Execute Full Pipeline</span>
-          <span class="btn-icon">⚡</span>
-        </button>
-      </section>
-
-      <!-- Right Column: Verification Results & Live Audit -->
-      <section class="results-column">
-        <!-- Stage 1 & 2 Cards Grid -->
-        <div class="two-col-grid">
-          <!-- Stage 1: Face Biometrics -->
-          <div class="card mini-card" id="cardBiometrics">
-            <div class="card-header">
-              <h3><span>🧬</span> Facial Biometrics</h3>
-              <span class="status-tag" id="bioStatus">Ready</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-lbl">Face Detected:</span>
-              <span class="metric-val" id="bioDetected">True (95.0%)</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-lbl">Descriptor:</span>
-              <span class="metric-val font-mono">128-d L2 Normalized</span>
-            </div>
-            <div class="metric-row">
-              <span class="metric-lbl">pHash (dHash):</span>
-              <span class="metric-val font-mono" id="bioDhash">336155170b170f0e</span>
-            </div>
-            <div class="hash-chip">
-              <span class="chip-label">Face SHA-256</span>
-              <span class="chip-value font-mono" id="faceHashDisplay">0xac0683e1...3760</span>
-            </div>
-          </div>
-
-          <!-- Stage 2: Discovered Post -->
-          <div class="card mini-card" id="cardSocial">
-            <div class="card-header">
-              <h3><span>🌐</span> Discovered Social Post</h3>
-              <span class="status-tag tag-verified" id="socialPlatform">Twitter/X</span>
-            </div>
-            <div class="post-preview-card">
-              <div class="post-author" id="postAuthor">@twitter_user</div>
-              <p class="post-text" id="postText">"Satya Nadella on X: Just wrapped our earnings call..."</p>
-              <div class="post-footer">
-                <a href="https://twitter.com/satyanadella" target="_blank" id="postUrl" class="post-link">View Original Post ↗</a>
-                <span class="match-score" id="matchScore">85% Match</span>
-              </div>
-            </div>
-            <div class="hash-chip">
-              <span class="chip-label">Post Content Hash</span>
-              <span class="chip-value font-mono" id="postHashDisplay">0x73007504...b484</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stage 3: Blockchain Record Card -->
-        <div class="card" id="cardBlockchain">
-          <div class="card-header">
-            <h3><span>⛓️</span> EVM On-Chain Proof Record</h3>
-            <span class="status-tag tag-success" id="chainConfirmStatus">CONFIRMED ON-CHAIN</span>
-          </div>
-          
-          <div class="blockchain-details-grid">
-            <div class="detail-box">
-              <span class="detail-lbl">Transaction Hash</span>
-              <span class="detail-val font-mono" id="txHashDisplay">0x024055...9428</span>
-            </div>
-            <div class="detail-box">
-              <span class="detail-lbl">Smart Contract Address</span>
-              <span class="detail-val font-mono" id="contractAddrDisplay">0xF2E246...395b</span>
-            </div>
-            <div class="detail-box">
-              <span class="detail-lbl">Merkle Tree Root</span>
-              <span class="detail-val font-mono" id="merkleRootDisplay">0x5442b2...0275</span>
-            </div>
-            <div class="detail-box">
-              <span class="detail-lbl">Block Timestamp</span>
-              <span class="detail-val" id="blockTimeDisplay">Block #2 (Confirmed)</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Stage 4: Interactive Tamper-Proof Lab -->
-        <div class="card tamper-lab-card" id="cardTamper">
-          <div class="card-header">
-            <h3><span>🛡️</span> Interactive Tamper-Proof Audit</h3>
-            <span class="status-tag tag-purple">Live Verification Engine</span>
-          </div>
-          <p class="tamper-desc">
-            Test the tamper-evident security. You can click <strong>Re-Verify On-Chain</strong> to prove authenticity, or <strong>Simulate Adversary Tamper Attack</strong> to modify post data and watch the smart contract reject it.
-          </p>
-          <div class="tamper-actions">
-            <button id="verifyBtn" class="btn btn-secondary">
-              <span>🔍</span> Re-Verify Authentic State
-            </button>
-            <button id="tamperBtn" class="btn btn-danger">
-              <span>⚠️</span> Simulate Adversary Attack
-            </button>
-          </div>
-          <div id="tamperReport" class="tamper-report-box">
-            <!-- Dynamic Tamper Results -->
-          </div>
-        </div>
-      </section>
+      <section class="card tamper-lab-card" id="cardTamper"><div class="audit-heading"><p class="eyebrow">Independent check</p><h2>Verify the record</h2><span class="audit-caption">Any change produces a different fingerprint.</span></div><div class="audit-content"><p class="tamper-desc">Compare the current evidence against the immutable ledger record, or run a controlled modification test to see the verification guard reject altered data.</p><div class="tamper-actions"><button id="verifyBtn" class="btn btn-secondary"><span>Re-verify record</span><span>↗</span></button><button id="tamperBtn" class="btn btn-danger"><span>Test altered data</span><span>↯</span></button></div></div><div id="tamperReport" class="tamper-report-box"><span class="report-empty">Run the pipeline to generate an audit report.</span></div></section>
     </main>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <p>Face Scan → Social Media Discovery → EVM Blockchain Verification &bull; Built with OpenCV & Web3.py</p>
-    </footer>
+    <footer class="footer"><span>Proofline</span><span>Evidence discovery · EVM verification</span><span>Local development environment</span></footer>
   </div>
-
   <script src="app.js"></script>
 </body>
 </html>
