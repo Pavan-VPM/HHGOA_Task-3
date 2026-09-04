@@ -1,0 +1,10 @@
+web3>=7.0.0
+eth-tester[py-evm]>=0.14.0b1
+opencv-python-headless>=4.10.0,<5
+numpy>=1.26.0
+pillow>=10.0.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+cryptography>=42.0.0
+ddgs>=9.0.0
+py-solc-x>=2.0.0
