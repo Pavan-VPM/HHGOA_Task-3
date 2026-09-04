@@ -1,0 +1,16 @@
+{
+  "name": "face-scan-blockchain-pipeline",
+  "version": "1.0.0",
+  "description": "Face Scan to Blockchain Social Media Verification Pipeline",
+  "main": "main.py",
+  "scripts": {
+    "dev": "./.venv/bin/python -u main.py demo",
+    "start": "./.venv/bin/python -u main.py demo",
+    "demo": "./.venv/bin/python -u main.py demo",
+    "run": "./.venv/bin/python -u main.py run --image samples/test_face_1.jpg --query 'Satya Nadella'",
+    "verify": "./.venv/bin/python -u main.py verify",
+    "test": "./.venv/bin/python -m unittest discover -s tests -v"
+  },
+  "keywords": ["face-recognition", "blockchain", "verification", "smart-contracts", "web3"],
+  "license": "MIT"
+}
