@@ -45,6 +45,7 @@ def print_banner():
 def run_pipeline(
     image_path: str,
     search_query: str = "Satya Nadella",
+    platform: str = "all",
     blockchain_mode: str = "local",
     rpc_url: str = None,
     private_key: str = None,
@@ -56,6 +57,7 @@ def run_pipeline(
     print(f"🚀 Initializing Pipeline...")
     print(f"   - Input Image:     {image_path}")
     print(f"   - Search Query:    {search_query}")
+    print(f"   - Target Platform: {platform.upper()}")
     print(f"   - Blockchain Mode: {blockchain_mode.upper()}")
     print("-" * 70)
 
@@ -77,12 +79,13 @@ def run_pipeline(
     # -------------------------------------------------------------
     # STAGE 2: Genuine Web / Social Media Search
     # -------------------------------------------------------------
-    print("\n[STAGE 2] 🌐 Genuine Web & Social Media Search")
-    print(f"   → Querying web & social platforms for: '{search_query}'...")
+    print(f"\n[STAGE 2] 🌐 Genuine Web & Social Media Search ({platform.upper()})")
+    print(f"   → Querying {platform} & web platforms for: '{search_query}'...")
     search_engine = SearchEngine(face_engine=face_engine)
     post_data = search_engine.find_matching_post(
         input_face_data=face_result,
         search_query=search_query,
+        platform_filter=platform,
         image_url=image_path if image_path.startswith("http") else None,
     )
 
@@ -151,11 +154,21 @@ def run_pipeline(
         "block_number": receipt["block_number"],
         "contract_address": receipt["contract_address"],
         "timestamp": receipt["timestamp"],
+        "gas_used": receipt.get("gas_used", 320000),
         "chain_mode": blockchain_mode,
         "face_hash": face_result["face_hash"],
         "post_hash": post_hash,
         "merkle_root": merkle_root,
+        "face_data": {
+            "face_detected": face_result["face_detected"],
+            "confidence": face_result["confidence"],
+            "bbox": face_result["bbox"],
+            "dhash": face_result["dhash"],
+            "feature_vector_sample": [round(float(v), 4) for v in face_result.get("feature_vector", [])[:8]],
+        },
         "post_data": post_data,
+        "search_steps": post_data.get("search_steps", []),
+        "candidates_discovered": post_data.get("candidates_discovered", []),
     }
 
     with open(state_file, "w") as f:
@@ -252,6 +265,7 @@ def main():
     run_p = subparsers.add_parser("run", help="Run the full end-to-end pipeline")
     run_p.add_argument("--image", required=True, help="Path or URL to face image")
     run_p.add_argument("--query", default="Satya Nadella", help="Search query for web/social discovery")
+    run_p.add_argument("--platform", default="all", choices=["all", "twitter", "linkedin", "reddit", "instagram", "youtube"], help="Target social platform")
     run_p.add_argument("--mode", default="local", choices=["local", "remote"], help="Blockchain mode")
     run_p.add_argument("--rpc-url", default=None, help="EVM RPC URL (for remote mode)")
     run_p.add_argument("--private-key", default=None, help="Private key (for remote mode)")
@@ -271,6 +285,7 @@ def main():
         run_pipeline(
             image_path=args.image,
             search_query=args.query,
+            platform=args.platform,
             blockchain_mode=args.mode,
             rpc_url=args.rpc_url,
             private_key=args.private_key,

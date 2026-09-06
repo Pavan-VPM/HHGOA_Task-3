@@ -84,6 +84,7 @@ class PipelineHandler(SimpleHTTPRequestHandler):
         if self.path == "/api/run":
             image_source = payload.get("image", "samples/test_face_1.jpg")
             query = payload.get("query", "Satya Nadella")
+            platform = payload.get("platform", "all")
             mode = payload.get("mode", "local")
 
             # Handle base64 image upload if provided
@@ -99,6 +100,7 @@ class PipelineHandler(SimpleHTTPRequestHandler):
                 result = run_pipeline(
                     image_path=image_source,
                     search_query=query,
+                    platform=platform,
                     blockchain_mode=mode,
                 )
                 state = result["pipeline_state"]
