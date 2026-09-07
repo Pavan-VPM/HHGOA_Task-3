@@ -9,13 +9,10 @@ import mimetypes
 import os
 import sys
 import base64
-from http.server import HTTPServer, SimpleHTTPRequestHandler
-from typing import Dict, Any
-
-from main import run_pipeline, DEFAULT_STATE_FILE
-from blockchain.evm_client import EVMClient
-from pipeline.verifier import Verifier
-from pipeline.face_engine import FaceEngine
+try:
+    from http.server import ThreadingHTTPServer as HTTPServerClass, SimpleHTTPRequestHandler
+except ImportError:
+    from http.server import HTTPServer as HTTPServerClass, SimpleHTTPRequestHandler
 
 PORT = int(os.environ.get("PORT", 3000))
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
@@ -27,6 +24,10 @@ class PipelineHandler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=WEB_DIR, **kwargs)
 
     def do_GET(self):
+        # Health check endpoint for cloud platforms (Railway, Render, AWS)
+        if self.path in ["/health", "/api/health"]:
+            self._send_json({"status": "ok", "service": "face-blockchain-pipeline"})
+            return
         # Serve sample images
         if self.path.startswith("/samples/"):
             filename = os.path.basename(self.path)
@@ -174,8 +175,8 @@ class PipelineHandler(SimpleHTTPRequestHandler):
 
 
 def run_server(port: int = PORT):
-    server = HTTPServer(("0.0.0.0", port), PipelineHandler)
-    print(f"✨ Minimal UI Web Dashboard running at http://localhost:{port}")
+    server = HTTPServerClass(("0.0.0.0", port), PipelineHandler)
+    print(f"✨ Minimal UI Web Dashboard running at http://0.0.0.0:{port}", flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
