@@ -25,9 +25,10 @@
         <div class="step-node" id="step4-indicator"><span class="step-num">04</span><span class="step-label">Verify</span></div>
       </div>
       <div class="dashboard-grid">
+        <!-- LEFT: Input Controls -->
         <section class="input-card" aria-labelledby="input-title">
           <div class="section-heading"><span class="section-index">A</span><div><p class="eyebrow">Source material</p><h2 id="input-title">Add an evidence image</h2></div></div>
-          <div class="upload-zone" id="dropZone"><input type="file" id="fileInput" accept="image/*" class="file-hidden"><div class="preview-wrapper" id="previewContainer"><img id="facePreview" src="/samples/test_face_1.jpg" alt="Selected evidence image"><div class="scan-overlay"><div class="scanner-laser"></div><div class="face-target-box" id="targetBox"></div></div><span class="image-state">Ready to process</span></div><p class="upload-hint">Drop an image here or <span class="browse-link">choose a file</span></p></div>
+          <div class="upload-zone" id="dropZone"><input type="file" id="fileInput" accept="image/*" class="file-hidden"><div class="preview-wrapper" id="previewContainer"><img id="facePreview" src="/samples/test_face_1.jpg" alt="Selected evidence image"><div class="scan-overlay"><div class="scanner-laser"></div><div class="face-target-box" id="targetBox"></div></div><span class="image-state" id="imageState">Ready to process</span></div><p class="upload-hint">Drop an image here or <span class="browse-link">choose a file</span></p></div>
           <div class="sample-section"><label class="section-label">Demo assets</label><div class="sample-pills" id="samplePills"></div></div>
           <div class="form-group">
             <label for="queryInput" class="section-label">Reference search</label>
@@ -48,76 +49,247 @@
               <button type="button" class="tag-btn platform-tag" data-platform="instagram">Instagram</button>
             </div>
           </div>
-          <button id="runBtn" class="btn btn-primary"><span class="btn-text">Create proof record</span><span class="btn-icon">→</span></button><p class="consent-note">Use only media and reference data you are authorized to process.</p>
+          <button id="runBtn" class="btn btn-primary"><span class="btn-text">Run pipeline</span><span class="btn-icon">&#x2192;</span></button>
+          <p class="consent-note">Use only media and reference data you are authorized to process.</p>
         </section>
-        <section class="results-column" aria-label="Verification results">
-          <div class="results-header"><div><p class="eyebrow">Proof record</p><h2>Live evidence trail</h2></div><span class="ready-label">System ready</span></div>
-          <div class="two-col-grid">
-            <article class="card mini-card" id="cardBiometrics"><div class="card-header"><h3><span class="card-icon">01</span> Source fingerprint</h3><span class="status-tag" id="bioStatus">Ready</span></div><div class="metric-row"><span class="metric-lbl">Image accepted</span><span class="metric-val" id="bioDetected">True (95.0%)</span></div><div class="metric-row"><span class="metric-lbl">Feature vector</span><span class="metric-val font-mono">128-d normalized</span></div><div class="metric-row"><span class="metric-lbl">Visual fingerprint</span><span class="metric-val font-mono" id="bioDhash">336155170b170f0e</span></div><div class="hash-chip"><span class="chip-label">SHA-256 source hash</span><span class="chip-value font-mono" id="faceHashDisplay">0xac0683e1...3760</span></div></article>
-            <article class="card mini-card" id="cardSocial"><div class="card-header"><h3><span class="card-icon">02</span> Discovered reference</h3><span class="status-tag tag-verified" id="socialPlatform">Twitter/X</span></div><div class="post-preview-card"><div class="post-author" id="postAuthor">@twitter_user</div><p class="post-text" id="postText">"A matching reference will appear here after discovery."</p><div class="post-footer"><a href="https://twitter.com/satyanadella" target="_blank" rel="noopener" id="postUrl" class="post-link">Open source <span>↗</span></a><span class="match-score" id="matchScore">85% match</span></div></div><div class="hash-chip"><span class="chip-label">Content hash</span><span class="chip-value font-mono" id="postHashDisplay">0x73007504...b484</span></div></article>
+
+        <!-- RIGHT: Pipeline Visualizer -->
+        <section class="results-column" aria-label="Pipeline execution">
+          <div class="results-header">
+            <div><p class="eyebrow">Pipeline execution</p><h2>Live evidence trail</h2></div>
+            <span class="ready-label" id="pipelineStatusLabel">System ready</span>
           </div>
-          <article class="card" id="cardBlockchain"><div class="card-header"><h3><span class="card-icon">03</span> Ledger anchor</h3><span class="status-tag tag-success" id="chainConfirmStatus">On-chain confirmed</span></div><div class="blockchain-details-grid"><div class="detail-box"><span class="detail-lbl">Transaction</span><span class="detail-val font-mono" id="txHashDisplay">0x024055...9428</span></div><div class="detail-box"><span class="detail-lbl">Contract</span><span class="detail-val font-mono" id="contractAddrDisplay">0xF2E246...395b</span></div><div class="detail-box"><span class="detail-lbl">Proof root</span><span class="detail-val font-mono" id="merkleRootDisplay">0x5442b2...0275</span></div><div class="detail-box"><span class="detail-lbl">Confirmation</span><span class="detail-val" id="blockTimeDisplay">Block #2 (confirmed)</span></div></div></article>
-          
-          <!-- Detailed Search Discovery & Inspection Explorer -->
-          <article class="card discovery-inspector-card" id="cardDiscoveryTrace">
-            <div class="card-header">
-              <h3><span class="card-icon">04</span> Live Search & Fetching Inspector</h3>
-              <span class="status-tag tag-verified" id="traceStatus">Live Discovery Feed</span>
-            </div>
-            <div class="trace-tabs">
-              <button type="button" class="trace-tab active" data-tab="stepsTab">Search Steps (<span id="stepsCount">0</span>)</button>
-              <button type="button" class="trace-tab" data-tab="candidatesTab">Discovered Candidates (<span id="candCount">0</span>)</button>
-              <button type="button" class="trace-tab" data-tab="cryptoTab">Cryptographic Hashes</button>
-            </div>
-            <div class="tab-content" id="stepsTab">
-              <ul class="trace-log-list" id="traceLogList">
-                <li class="log-entry log-dim">Awaiting pipeline execution to record live web queries...</li>
-              </ul>
-            </div>
-            <div class="tab-content hidden" id="candidatesTab">
-              <div class="candidates-table-wrap">
-                <table class="candidates-table">
-                  <thead>
-                    <tr>
-                      <th>Platform</th>
-                      <th>Author</th>
-                      <th>Content / Title</th>
-                      <th>Match</th>
-                      <th>Link</th>
-                    </tr>
-                  </thead>
-                  <tbody id="candidatesTableBody">
-                    <tr><td colspan="5" class="empty-table-msg">Run pipeline to inspect discovered search records.</td></tr>
-                  </tbody>
-                </table>
+
+          <div class="pipeline-flow" id="pipelineFlow">
+
+            <!-- Stage 1: Face Engine -->
+            <div class="flow-stage" id="flowStage1">
+              <div class="flow-stage-header">
+                <div class="flow-stage-id"><span class="flow-num">01</span><span class="flow-status-dot" id="dot1"></span></div>
+                <div class="flow-stage-meta">
+                  <span class="flow-label">Face Detection &amp; Biometric Encoding</span>
+                  <span class="flow-sublabel">OpenCV Haar Cascade &#x2192; SHA-256 Fingerprint</span>
+                </div>
+                <span class="flow-badge" id="badge1">Idle</span>
               </div>
-            </div>
-            <div class="tab-content hidden" id="cryptoTab">
-              <div class="crypto-breakdown">
-                <div class="crypto-row">
-                  <span class="crypto-label">Face Hash (SHA-256):</span>
-                  <code class="crypto-code" id="fullFaceHash">--</code>
-                </div>
-                <div class="crypto-row">
-                  <span class="crypto-label">Post Content Hash (SHA-256):</span>
-                  <code class="crypto-code" id="fullPostHash">--</code>
-                </div>
-                <div class="crypto-row">
-                  <span class="crypto-label">Merkle Root (Composite Leaf):</span>
-                  <code class="crypto-code" id="fullMerkleRoot">--</code>
-                </div>
-                <div class="crypto-row">
-                  <span class="crypto-label">128-d Vector Descriptor Preview:</span>
-                  <code class="crypto-code" id="vectorPreview">--</code>
+              <div class="flow-body" id="flowBody1">
+                <div class="flow-io-grid">
+                  <div class="flow-io-block flow-input">
+                    <span class="flow-io-label">INPUT</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Image source</span><span class="flow-io-val" id="s1_src">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Resolution</span><span class="flow-io-val" id="s1_shape">&#x2014;</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-process">
+                    <span class="flow-io-label">PROCESS</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Detection</span><span class="flow-io-val">Haar Cascade<br>scaleFactor=1.1</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Normalization</span><span class="flow-io-val">160&#x00D7;160px<br>Histogram Equalize</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Feature extraction</span><span class="flow-io-val">4&#x00D7;4 spatial grid<br>128-d descriptor</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-output">
+                    <span class="flow-io-label">OUTPUT</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Face detected</span><span class="flow-io-val" id="s1_detected">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Confidence</span><span class="flow-io-val" id="s1_conf">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Bounding box</span><span class="flow-io-val" id="s1_bbox">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">dHash</span><span class="flow-io-val font-mono" id="s1_dhash">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Face SHA-256</span><span class="flow-io-val font-mono hash-val" id="s1_hash">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">128-d vector</span><span class="flow-io-val font-mono small-val" id="s1_vec">&#x2014;</span></div>
+                  </div>
                 </div>
               </div>
             </div>
-          </article>
+
+            <div class="flow-connector-v" id="flowConn1">
+              <div class="flow-conn-line"></div>
+              <div class="flow-conn-label">face_hash + feature_vector</div>
+            </div>
+
+            <!-- Stage 2: Social Discovery -->
+            <div class="flow-stage" id="flowStage2">
+              <div class="flow-stage-header">
+                <div class="flow-stage-id"><span class="flow-num">02</span><span class="flow-status-dot" id="dot2"></span></div>
+                <div class="flow-stage-meta">
+                  <span class="flow-label">Web &amp; Social Media Discovery</span>
+                  <span class="flow-sublabel">ddgs multi-platform crawl &#x2192; Facial correspondence validation</span>
+                </div>
+                <span class="flow-badge" id="badge2">Idle</span>
+              </div>
+              <div class="flow-body" id="flowBody2">
+                <div class="flow-io-grid">
+                  <div class="flow-io-block flow-input">
+                    <span class="flow-io-label">INPUT</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Search query</span><span class="flow-io-val" id="s2_query">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Platform filter</span><span class="flow-io-val" id="s2_plat">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Face vector</span><span class="flow-io-val">128-d descriptor</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-process">
+                    <span class="flow-io-label">PROCESS</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Web index</span><span class="flow-io-val">ddgs.text()<br>site:* queries</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Image search</span><span class="flow-io-val">ddgs.images()<br>visual crawl</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Face compare</span><span class="flow-io-val">cosine_sim (0.7w)<br>+ hamming_dist (0.3w)</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-output">
+                    <span class="flow-io-label">OUTPUT</span>
+                    <div class="flow-io-item"><span class="flow-io-key">Candidates found</span><span class="flow-io-val" id="s2_cands">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Best platform</span><span class="flow-io-val" id="s2_bestplat">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Author</span><span class="flow-io-val" id="s2_author">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Match confidence</span><span class="flow-io-val" id="s2_score">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Post URL</span><span class="flow-io-val" id="s2_url">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Text snippet</span><span class="flow-io-val small-val" id="s2_text">&#x2014;</span></div>
+                  </div>
+                </div>
+                <div class="platform-results-section">
+                  <p class="flow-io-label" style="margin-bottom:10px">RESULTS PER PLATFORM</p>
+                  <div class="platform-results-grid" id="platformResultsGrid">
+                    <div class="plat-result-placeholder">Run pipeline to see results across LinkedIn, X, Reddit, Instagram and more.</div>
+                  </div>
+                </div>
+                <div class="candidates-inline">
+                  <p class="flow-io-label" style="margin-bottom:8px">ALL DISCOVERED CANDIDATES</p>
+                  <div class="candidates-table-wrap">
+                    <table class="candidates-table">
+                      <thead><tr><th>Platform</th><th>Author</th><th>Title / Content</th><th>Match</th><th>Link</th></tr></thead>
+                      <tbody id="candidatesTableBody"><tr><td colspan="5" class="empty-table-msg">Run pipeline to inspect discovered search records.</td></tr></tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-connector-v" id="flowConn2">
+              <div class="flow-conn-line"></div>
+              <div class="flow-conn-label">post_data + media_sha256</div>
+            </div>
+
+            <!-- Stage 3: Blockchain Anchor -->
+            <div class="flow-stage" id="flowStage3">
+              <div class="flow-stage-header">
+                <div class="flow-stage-id"><span class="flow-num">03</span><span class="flow-status-dot" id="dot3"></span></div>
+                <div class="flow-stage-meta">
+                  <span class="flow-label">Merkle Tree + EVM Blockchain Anchor</span>
+                  <span class="flow-sublabel">SHA-256 leaf hashing &#x2192; Smart contract registration</span>
+                </div>
+                <span class="flow-badge" id="badge3">Idle</span>
+              </div>
+              <div class="flow-body" id="flowBody3">
+                <div class="flow-io-grid">
+                  <div class="flow-io-block flow-input">
+                    <span class="flow-io-label">INPUT</span>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Leaf 1: face_hash</span><span class="flow-io-val font-mono hash-val" id="s3_leaf1">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Leaf 2: post_hash</span><span class="flow-io-val font-mono hash-val" id="s3_leaf2">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Leaf 3: media_hash</span><span class="flow-io-val font-mono hash-val" id="s3_leaf3">&#x2014;</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-process">
+                    <span class="flow-io-label">PROCESS</span>
+                    <div class="merkle-tree-visual">
+                      <div class="merkle-root-box">
+                        <span class="merkle-lbl">Merkle Root</span>
+                        <span class="merkle-hash" id="s3_merkle_viz">&#x2014;</span>
+                      </div>
+                      <div class="merkle-branches">
+                        <div class="merkle-branch-line"></div>
+                        <div class="merkle-branch-line"></div>
+                      </div>
+                      <div class="merkle-leaves">
+                        <div class="merkle-leaf"><span>H(face)</span></div>
+                        <div class="merkle-leaf"><span>H(post)</span></div>
+                        <div class="merkle-leaf"><span>H(media)</span></div>
+                      </div>
+                    </div>
+                    <div class="flow-io-item" style="margin-top:10px"><span class="flow-io-key">Contract</span><span class="flow-io-val">FacePostRegistry.sol<br>EVM Local Chain</span></div>
+                  </div>
+                  <div class="flow-io-arrow">&#x2192;</div>
+                  <div class="flow-io-block flow-output">
+                    <span class="flow-io-label">OUTPUT</span>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Merkle root</span><span class="flow-io-val font-mono hash-val" id="s3_merkle">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Tx hash</span><span class="flow-io-val font-mono hash-val" id="s3_tx">&#x2014;</span></div>
+                    <div class="flow-io-item hash-row"><span class="flow-io-key">Contract addr</span><span class="flow-io-val font-mono hash-val" id="s3_contract">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Block number</span><span class="flow-io-val" id="s3_block">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Gas used</span><span class="flow-io-val" id="s3_gas">&#x2014;</span></div>
+                    <div class="flow-io-item"><span class="flow-io-key">Status</span><span class="flow-io-val" id="s3_status">&#x2014;</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flow-connector-v" id="flowConn3">
+              <div class="flow-conn-line"></div>
+              <div class="flow-conn-label">on-chain record + merkle_root</div>
+            </div>
+
+            <!-- Stage 4: Verification & Audit -->
+            <div class="flow-stage" id="flowStage4">
+              <div class="flow-stage-header">
+                <div class="flow-stage-id"><span class="flow-num">04</span><span class="flow-status-dot" id="dot4"></span></div>
+                <div class="flow-stage-meta">
+                  <span class="flow-label">On-Chain Verification &amp; Tamper Audit</span>
+                  <span class="flow-sublabel">Solidity contract query &#x2192; Zero-trust hash comparison</span>
+                </div>
+                <span class="flow-badge" id="badge4">Idle</span>
+              </div>
+              <div class="flow-body" id="flowBody4">
+                <div class="verify-result-grid">
+                  <div class="verify-check" id="vc_reg">
+                    <span class="vc-icon">&#x25CC;</span>
+                    <div class="vc-text"><strong>Record registered</strong><span>Record ID matches on-chain smart contract slot</span></div>
+                    <span class="vc-verdict" id="vrd_reg">&#x2014;</span>
+                  </div>
+                  <div class="verify-check" id="vc_hash">
+                    <span class="vc-icon">&#x25CC;</span>
+                    <div class="vc-text"><strong>Hash integrity</strong><span>SHA-256 face_hash and post_hash match stored values</span></div>
+                    <span class="vc-verdict" id="vrd_hash">&#x2014;</span>
+                  </div>
+                  <div class="verify-check" id="vc_merkle">
+                    <span class="vc-icon">&#x25CC;</span>
+                    <div class="vc-text"><strong>Merkle proof</strong><span>Composite leaf root matches anchored proof root</span></div>
+                    <span class="vc-verdict" id="vrd_merkle">&#x2014;</span>
+                  </div>
+                  <div class="verify-check" id="vc_tamper">
+                    <span class="vc-icon">&#x25CC;</span>
+                    <div class="vc-text"><strong>Tamper guard</strong><span>Any modification to data produces a different root</span></div>
+                    <span class="vc-verdict" id="vrd_tamper">&#x2014;</span>
+                  </div>
+                </div>
+                <div class="flow-final-verdict">
+                  <div class="verdict-state idle" id="verdictBox">
+                    <span class="verdict-icon" id="verdictIcon">&#x25CC;</span>
+                    <div>
+                      <strong id="verdictTitle">Awaiting pipeline run</strong>
+                      <span id="verdictSub">Run the pipeline to see cryptographic proof</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div><!-- /pipeline-flow -->
+
+          <!-- Live Execution Log -->
+          <div class="exec-log-card">
+            <div class="exec-log-header">
+              <span class="exec-log-title">&#x2699; Live execution log</span>
+              <span class="exec-log-count" id="execLogCount">0 steps</span>
+            </div>
+            <ul class="trace-log-list" id="traceLogList">
+              <li class="log-entry log-dim">Awaiting pipeline execution...</li>
+            </ul>
+          </div>
+
         </section>
       </div>
-      <section class="card tamper-lab-card" id="cardTamper"><div class="audit-heading"><p class="eyebrow">Independent check</p><h2>Verify the record</h2><span class="audit-caption">Any change produces a different fingerprint.</span></div><div class="audit-content"><p class="tamper-desc">Compare the current evidence against the immutable ledger record, or run a controlled modification test to see the verification guard reject altered data.</p><div class="tamper-actions"><button id="verifyBtn" class="btn btn-secondary"><span>Re-verify record</span><span>↗</span></button><button id="tamperBtn" class="btn btn-danger"><span>Test altered data</span><span>↯</span></button></div></div><div id="tamperReport" class="tamper-report-box"><span class="report-empty">Run the pipeline to generate an audit report.</span></div></section>
+
+      <!-- Tamper Lab -->
+      <section class="card tamper-lab-card" id="cardTamper">
+        <div class="audit-heading"><p class="eyebrow">Independent check</p><h2>Verify the record</h2><span class="audit-caption">Any change produces a different fingerprint.</span></div>
+        <div class="audit-content"><p class="tamper-desc">Compare the current evidence against the immutable ledger record, or run a controlled modification test to see the verification guard reject altered data.</p><div class="tamper-actions"><button id="verifyBtn" class="btn btn-secondary"><span>Re-verify record</span><span>&#x2197;</span></button><button id="tamperBtn" class="btn btn-danger"><span>Test altered data</span><span>&#x21AF;</span></button></div></div>
+        <div id="tamperReport" class="tamper-report-box"><span class="report-empty">Run the pipeline to generate an audit report.</span></div>
+      </section>
     </main>
-    <footer class="footer"><span>Proofline</span><span>Evidence discovery · EVM verification</span><span>Local development environment</span></footer>
+    <footer class="footer"><span>Proofline</span><span>Evidence discovery &middot; EVM verification</span><span>Local development environment</span></footer>
   </div>
   <script src="app.js"></script>
 </body>

@@ -165,6 +165,7 @@ def run_pipeline(
             "bbox": face_result["bbox"],
             "dhash": face_result["dhash"],
             "feature_vector_sample": [round(float(v), 4) for v in face_result.get("feature_vector", [])[:8]],
+            "original_shape": face_result.get("original_shape", []),
         },
         "post_data": post_data,
         "search_steps": post_data.get("search_steps", []),

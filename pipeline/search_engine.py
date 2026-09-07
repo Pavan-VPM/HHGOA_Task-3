@@ -109,25 +109,74 @@ class SearchEngine:
                 "url": image_url,
                 "api_key": self.serpapi_key,
             }
-            resp = requests.get(endpoint, params=params, timeout=20)
+            print(f"[SerpApi] Calling Google Lens for: {image_url[:60]}...")
+            resp = requests.get(endpoint, params=params, timeout=25)
             if resp.status_code != 200:
+                print(f"[SerpApi] HTTP {resp.status_code}: {resp.text[:200]}")
                 return []
             data = resp.json()
-            matches = data.get("visual_matches", [])
+
+            if "error" in data:
+                print(f"[SerpApi] API error: {data['error']}")
+                return []
+
             results = []
-            for m in matches:
+
+            # 1. visual_matches — direct image matches
+            for m in data.get("visual_matches", []):
                 link = m.get("link", "")
+                if not link:
+                    continue
                 results.append({
                     "title": m.get("title", ""),
                     "url": link,
+                    "snippet": m.get("source", ""),
                     "image_url": m.get("thumbnail", ""),
-                    "source": m.get("source", ""),
+                    "platform": self.detect_platform(link),
+                    "author_hint": self.extract_author(link, m.get("title", ""), self.detect_platform(link)),
                     "is_social": self.is_social_url(link),
                 })
+
+            # 2. organic_results — web search results from the image context
+            for m in data.get("organic_results", []):
+                link = m.get("link", "")
+                if not link:
+                    continue
+                results.append({
+                    "title": m.get("title", ""),
+                    "url": link,
+                    "snippet": m.get("snippet", ""),
+                    "image_url": m.get("thumbnail", ""),
+                    "platform": self.detect_platform(link),
+                    "author_hint": self.extract_author(link, m.get("title", ""), self.detect_platform(link)),
+                    "is_social": self.is_social_url(link),
+                })
+
+            # 3. related_content — entity cards
+            for m in data.get("related_content", []):
+                link = m.get("link", "")
+                if not link:
+                    continue
+                results.append({
+                    "title": m.get("title", ""),
+                    "url": link,
+                    "snippet": m.get("subtitle", ""),
+                    "image_url": m.get("thumbnail", {}).get("url", "") if isinstance(m.get("thumbnail"), dict) else "",
+                    "platform": self.detect_platform(link),
+                    "author_hint": self.extract_author(link, m.get("title", ""), self.detect_platform(link)),
+                    "is_social": self.is_social_url(link),
+                })
+
+            print(f"[SerpApi] Google Lens returned {len(results)} total results "
+                  f"(visual={len(data.get('visual_matches',[]))}, "
+                  f"organic={len(data.get('organic_results',[]))}, "
+                  f"related={len(data.get('related_content',[]))})")
             return results
+
         except Exception as e:
             print(f"[SearchEngine] SerpApi error: {e}")
             return []
+
 
     def upload_to_tmpfiles(self, face_crop: 'numpy.ndarray') -> Optional[str]:
         """Uploads a face crop temporarily to tmpfiles.org to get a public URL for SerpApi Google Lens."""
@@ -212,17 +261,25 @@ class SearchEngine:
                     f"site:youtube.com {query}",
                 ]
             else:
-                # All platforms combined
+                # All platforms — run separate targeted queries per platform
                 platform_queries = [
-                    f"site:linkedin.com/posts OR site:linkedin.com/in {query}",
-                    f"site:x.com/*/status OR site:twitter.com/*/status {query}",
-                    f"site:reddit.com/r/*/comments {query}",
-                    f"site:instagram.com/p/ {query}",
+                    f"site:linkedin.com {query}",
+                    f"site:linkedin.com/in {query}",
+                    f"site:x.com {query}",
+                    f"site:twitter.com {query}",
+                    f"\"@" + query.split()[0] + "\" site:x.com OR site:twitter.com",
+                    f"site:reddit.com {query}",
+                    f"site:reddit.com/r/ {query}",
+                    f"site:instagram.com {query}",
+                    f"site:youtube.com {query}",
+                    f"site:facebook.com {query}",
+                    f"{query} twitter post",
+                    f"{query} instagram profile",
                 ]
 
             for sub_q in platform_queries:
                 try:
-                    for item in ddgs.text(sub_q, max_results=4):
+                    for item in ddgs.text(sub_q, max_results=6):
                         href = item.get("href", "")
                         if href and href not in [r["url"] for r in results]:
                             title = item.get("title", "")
@@ -242,32 +299,44 @@ class SearchEngine:
                 except Exception:
                     pass
 
-            # Visual / Image results search
-            img_query = f"{query} {plat if plat != 'all' else 'social media'} post"
-            try:
-                for img_item in ddgs.images(img_query, max_results=6):
-                    src_url = img_item.get("url", "")
-                    img_url = img_item.get("image", "")
-                    canon_src = self.canonicalize_social_url(src_url)
-                    detected_plat = self.detect_platform(canon_src or img_url)
-                    author = self.extract_author(canon_src or "", img_item.get("title", ""), detected_plat)
+            # Visual / Image results search — run per-platform for better coverage
+            image_queries = (
+                [f"{query} {plat} post"] if plat != 'all'
+                else [
+                    f"{query} twitter post",
+                    f"{query} instagram post",
+                    f"{query} linkedin profile",
+                    f"{query} reddit",
+                ]
+            )
+            for img_query in image_queries:
+                try:
+                    for img_item in ddgs.images(img_query, max_results=5):
+                        src_url = img_item.get("url", "")
+                        img_url = img_item.get("image", "")
+                        if not src_url and not img_url:
+                            continue
+                        canon_src = self.canonicalize_social_url(src_url)
+                        detected_plat = self.detect_platform(canon_src or img_url)
+                        author = self.extract_author(canon_src or "", img_item.get("title", ""), detected_plat)
 
-                    results.append({
-                        "title": img_item.get("title", ""),
-                        "url": canon_src or img_url,
-                        "snippet": img_item.get("title", ""),
-                        "image_url": img_url,
-                        "is_social": self.is_social_url(canon_src) if canon_src else False,
-                        "platform": detected_plat,
-                        "author_hint": author,
-                    })
-            except Exception:
-                pass
+                        if (canon_src or img_url) not in [r["url"] for r in results]:
+                            results.append({
+                                "title": img_item.get("title", ""),
+                                "url": canon_src or img_url,
+                                "snippet": img_item.get("title", ""),
+                                "image_url": img_url,
+                                "is_social": self.is_social_url(canon_src) if canon_src else False,
+                                "platform": detected_plat,
+                                "author_hint": author,
+                            })
+                except Exception:
+                    pass
 
         except Exception as e:
             print(f"[SearchEngine] Live search exception: {e}")
 
-        return results[:max_results]
+        return results[:max_results * 3]
 
     def download_image_and_hash(self, image_url: str) -> Optional[Dict[str, Any]]:
         """Downloads an image from a URL, computes its SHA-256 hash, and verifies face presence."""
@@ -338,13 +407,21 @@ class SearchEngine:
         candidates.extend(live_results)
         search_steps.append(f"Live search retrieved {len(live_results)} candidate records across social domains.")
 
-        # Step 3: Parse candidates and validate matching content
+        # Step 3: Parse ALL candidates — collect best per platform, NO early exit
         best_post = None
         highest_similarity = -1.0
         inspected_candidates = []
+        # Track best result per platform to surface multi-platform results
+        best_per_platform: Dict[str, Dict[str, Any]] = {}
+
+        seen_urls: set = set()
 
         for cand in candidates:
             cand_url = cand.get("url", "")
+            if not cand_url or cand_url in seen_urls:
+                continue
+            seen_urls.add(cand_url)
+
             img_url = cand.get("image_url", "")
             title = cand.get("title", "")
             snippet = cand.get("snippet", "")
@@ -357,7 +434,7 @@ class SearchEngine:
 
             # Attempt to download and verify facial match if image_url exists
             media_info = None
-            comp_score = 0.85  # Default baseline for verified visual query match
+            comp_score = 0.85  # Default baseline
 
             if img_url:
                 media_info = self.download_image_and_hash(img_url)
@@ -370,7 +447,7 @@ class SearchEngine:
             author = cand.get("author_hint") or self.extract_author(cand_url, title, platform)
 
             clean_url = self.canonicalize_social_url(cand_url, author)
-            is_actual_post = any(kw in clean_url for kw in ["/status/", "/comments/", "/posts/", "/in/", "/p/", "/reel/"])
+            is_actual_post = any(kw in clean_url for kw in ["/status/", "/comments/", "/posts/", "/in/", "/p/", "/reel/", "/watch"])
 
             post_record = {
                 "platform": platform,
@@ -384,30 +461,52 @@ class SearchEngine:
                 "is_genuine_web_match": True,
             }
 
-            inspected_candidates.append({
+            candidate_entry = {
                 "title": title[:60],
                 "url": clean_url,
                 "author": author,
                 "platform": platform,
                 "score": round(float(comp_score), 2),
                 "is_post": is_actual_post,
-            })
+                "image_url": img_url,
+            }
+            inspected_candidates.append(candidate_entry)
 
-            # Boost priority for actual profile/post URLs
+            # Boost priority for actual post URLs
             effective_score = comp_score + (0.15 if is_actual_post else 0.0)
 
+            # Track overall best
             if effective_score > highest_similarity:
                 highest_similarity = effective_score
                 best_post = post_record
 
-            if is_actual_post and highest_similarity >= 0.7:
-                best_post["search_steps"] = search_steps
-                best_post["candidates_discovered"] = inspected_candidates[:8]
-                return best_post
+            # Track best per platform (for multi-platform surface in UI)
+            prev_best = best_per_platform.get(platform)
+            if prev_best is None or effective_score > prev_best.get("_eff_score", 0):
+                post_record_copy = dict(post_record)
+                post_record_copy["_eff_score"] = effective_score
+                post_record_copy["is_post"] = is_actual_post
+                best_per_platform[platform] = post_record_copy
+
+        # Build per-platform summary for UI (sorted by score)
+        platform_results = sorted(
+            [{**v, "platform": k} for k, v in best_per_platform.items()],
+            key=lambda x: x.get("_eff_score", 0),
+            reverse=True
+        )
+        # Clean internal key
+        for pr in platform_results:
+            pr.pop("_eff_score", None)
+            pr.pop("is_post", None)
+
+        search_steps.append(
+            f"Multi-platform scan complete: found results across [{', '.join(best_per_platform.keys())}]"
+        )
 
         if best_post:
             best_post["search_steps"] = search_steps
-            best_post["candidates_discovered"] = inspected_candidates[:8]
+            best_post["candidates_discovered"] = inspected_candidates[:20]
+            best_post["platform_results"] = platform_results
             return best_post
 
         # Fallback profile based on requested platform

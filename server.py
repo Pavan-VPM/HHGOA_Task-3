@@ -95,6 +95,12 @@ class PipelineHandler(SimpleHTTPRequestHandler):
                 with open(upload_path, "wb") as f:
                     f.write(img_bytes)
                 image_source = upload_path
+            elif image_source.startswith("/samples/"):
+                image_source = os.path.join(SAMPLES_DIR, os.path.basename(image_source))
+            elif not os.path.isabs(image_source) and not os.path.exists(image_source):
+                candidate_sample = os.path.join(SAMPLES_DIR, os.path.basename(image_source))
+                if os.path.exists(candidate_sample):
+                    image_source = candidate_sample
 
             try:
                 result = run_pipeline(
