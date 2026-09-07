@@ -110,7 +110,7 @@ class SearchEngine:
                 "api_key": self.serpapi_key,
             }
             print(f"[SerpApi] Calling Google Lens for: {image_url[:60]}...")
-            resp = requests.get(endpoint, params=params, timeout=25)
+            resp = requests.get(endpoint, params=params, timeout=8)
             if resp.status_code != 200:
                 print(f"[SerpApi] HTTP {resp.status_code}: {resp.text[:200]}")
                 return []
@@ -177,7 +177,6 @@ class SearchEngine:
             print(f"[SearchEngine] SerpApi error: {e}")
             return []
 
-
     def upload_to_tmpfiles(self, face_crop: 'numpy.ndarray') -> Optional[str]:
         """Uploads a face crop temporarily to tmpfiles.org to get a public URL for SerpApi Google Lens."""
         try:
@@ -190,13 +189,12 @@ class SearchEngine:
             resp = requests.post(
                 "https://tmpfiles.org/api/v1/upload",
                 files={"file": ("face.jpg", image_bytes, "image/jpeg")},
-                timeout=15
+                timeout=5
             )
             if resp.status_code == 200:
                 data = resp.json()
                 raw_url = data.get("data", {}).get("url", "")
                 if raw_url:
-                    # Convert the view URL to the direct download URL
                     return raw_url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
         except Exception as e:
             print(f"[SearchEngine] Error uploading to tmpfiles.org: {e}")
@@ -220,9 +218,9 @@ class SearchEngine:
 
         return url
 
-    def search_live_social(self, query: str, platform_filter: str = "all", max_results: int = 12) -> List[Dict[str, Any]]:
+    def search_live_social(self, query: str, platform_filter: str = "all", max_results: int = 8) -> List[Dict[str, Any]]:
         """
-        Performs genuine real-time web & social media search across multiple platforms (Twitter, LinkedIn, Reddit, Instagram, YouTube, etc.).
+        Performs genuine real-time web & social media search across multiple platforms efficiently.
         """
         results = []
 
@@ -230,51 +228,21 @@ class SearchEngine:
             from ddgs import DDGS
             ddgs = DDGS()
 
-            # Target queries based on selected platform filter
-            platform_queries = []
             plat = (platform_filter or "all").lower().strip()
-
             if plat in ["linkedin"]:
-                platform_queries = [
-                    f"site:linkedin.com/posts {query}",
-                    f"site:linkedin.com/in {query}",
-                    f"site:linkedin.com/pulse {query}",
-                ]
+                platform_queries = [f"site:linkedin.com/in OR site:linkedin.com/posts {query}"]
             elif plat in ["twitter", "x"]:
-                platform_queries = [
-                    f"site:x.com/*/status OR site:twitter.com/*/status {query}",
-                    f"site:x.com {query}",
-                ]
+                platform_queries = [f"site:x.com OR site:twitter.com {query}"]
             elif plat in ["reddit"]:
-                platform_queries = [
-                    f"site:reddit.com/r/*/comments {query}",
-                    f"site:reddit.com/user {query}",
-                ]
+                platform_queries = [f"site:reddit.com {query}"]
             elif plat in ["instagram"]:
-                platform_queries = [
-                    f"site:instagram.com/p/ OR site:instagram.com/reel/ {query}",
-                    f"site:instagram.com {query}",
-                ]
+                platform_queries = [f"site:instagram.com {query}"]
             elif plat in ["youtube"]:
-                platform_queries = [
-                    f"site:youtube.com/watch {query}",
-                    f"site:youtube.com {query}",
-                ]
+                platform_queries = [f"site:youtube.com {query}"]
             else:
-                # All platforms — run separate targeted queries per platform
                 platform_queries = [
-                    f"site:linkedin.com {query}",
-                    f"site:linkedin.com/in {query}",
-                    f"site:x.com {query}",
-                    f"site:twitter.com {query}",
-                    f"\"@" + query.split()[0] + "\" site:x.com OR site:twitter.com",
-                    f"site:reddit.com {query}",
-                    f"site:reddit.com/r/ {query}",
-                    f"site:instagram.com {query}",
-                    f"site:youtube.com {query}",
-                    f"site:facebook.com {query}",
-                    f"{query} twitter post",
-                    f"{query} instagram profile",
+                    f"{query} site:linkedin.com OR site:x.com OR site:twitter.com",
+                    f"{query} site:reddit.com OR site:instagram.com OR site:youtube.com",
                 ]
 
             for sub_q in platform_queries:
@@ -299,44 +267,35 @@ class SearchEngine:
                 except Exception:
                     pass
 
-            # Visual / Image results search — run per-platform for better coverage
-            image_queries = (
-                [f"{query} {plat} post"] if plat != 'all'
-                else [
-                    f"{query} twitter post",
-                    f"{query} instagram post",
-                    f"{query} linkedin profile",
-                    f"{query} reddit",
-                ]
-            )
-            for img_query in image_queries:
-                try:
-                    for img_item in ddgs.images(img_query, max_results=5):
-                        src_url = img_item.get("url", "")
-                        img_url = img_item.get("image", "")
-                        if not src_url and not img_url:
-                            continue
-                        canon_src = self.canonicalize_social_url(src_url)
-                        detected_plat = self.detect_platform(canon_src or img_url)
-                        author = self.extract_author(canon_src or "", img_item.get("title", ""), detected_plat)
+            # Fast single image query if needed
+            try:
+                img_query = f"{query} {plat if plat != 'all' else 'social'} post"
+                for img_item in ddgs.images(img_query, max_results=4):
+                    src_url = img_item.get("url", "")
+                    img_url = img_item.get("image", "")
+                    if not src_url and not img_url:
+                        continue
+                    canon_src = self.canonicalize_social_url(src_url)
+                    detected_plat = self.detect_platform(canon_src or img_url)
+                    author = self.extract_author(canon_src or "", img_item.get("title", ""), detected_plat)
 
-                        if (canon_src or img_url) not in [r["url"] for r in results]:
-                            results.append({
-                                "title": img_item.get("title", ""),
-                                "url": canon_src or img_url,
-                                "snippet": img_item.get("title", ""),
-                                "image_url": img_url,
-                                "is_social": self.is_social_url(canon_src) if canon_src else False,
-                                "platform": detected_plat,
-                                "author_hint": author,
-                            })
-                except Exception:
-                    pass
+                    if (canon_src or img_url) not in [r["url"] for r in results]:
+                        results.append({
+                            "title": img_item.get("title", ""),
+                            "url": canon_src or img_url,
+                            "snippet": img_item.get("title", ""),
+                            "image_url": img_url,
+                            "is_social": self.is_social_url(canon_src) if canon_src else False,
+                            "platform": detected_plat,
+                            "author_hint": author,
+                        })
+            except Exception:
+                pass
 
         except Exception as e:
             print(f"[SearchEngine] Live search exception: {e}")
 
-        return results[:max_results * 3]
+        return results[:max_results]
 
     def download_image_and_hash(self, image_url: str) -> Optional[Dict[str, Any]]:
         """Downloads an image from a URL, computes its SHA-256 hash, and verifies face presence."""
@@ -347,7 +306,7 @@ class SearchEngine:
             headers = {
                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
             }
-            resp = requests.get(image_url, headers=headers, timeout=12)
+            resp = requests.get(image_url, headers=headers, timeout=3)
             if resp.status_code != 200 or len(resp.content) < 500:
                 return None
 
@@ -416,7 +375,7 @@ class SearchEngine:
 
         seen_urls: set = set()
 
-        for cand in candidates:
+        for cand in candidates[:6]:
             cand_url = cand.get("url", "")
             if not cand_url or cand_url in seen_urls:
                 continue
