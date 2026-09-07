@@ -180,20 +180,45 @@ class PipelineHandler(SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
 
+import threading
+
+
 def run_server(port: int = PORT):
-    server = HTTPServerClass(("0.0.0.0", port), PipelineHandler)
-    print(f"✨ Minimal UI Web Dashboard running at http://0.0.0.0:{port}", flush=True)
+    servers = []
+    
+    # 1. Primary server on assigned PORT
     try:
-        server.serve_forever()
+        primary_server = HTTPServerClass(("0.0.0.0", port), PipelineHandler)
+        servers.append(primary_server)
+        print(f"✨ Primary Web Server active on http://0.0.0.0:{port}", flush=True)
+    except Exception as e:
+        print(f"❌ Error binding primary server to port {port}: {e}", flush=True)
+
+    # 2. Secondary fallback server on port 3000 (if PORT != 3000)
+    if port != 3000:
+        try:
+            fallback_server = HTTPServerClass(("0.0.0.0", 3000), PipelineHandler)
+            servers.append(fallback_server)
+            threading.Thread(target=fallback_server.serve_forever, daemon=True).start()
+            print(f"✨ Dual-port fallback active on http://0.0.0.0:3000", flush=True)
+        except Exception as e:
+            print(f"ℹ️ Secondary port 3000 note: {e}", flush=True)
+
+    if not servers:
+        sys.exit(1)
+
+    try:
+        servers[0].serve_forever()
     except KeyboardInterrupt:
         print("\nShutting down server...")
-        server.server_close()
+        for s in servers:
+            s.server_close()
 
 
 if __name__ == "__main__":
     port = PORT
     if len(sys.argv) > 1 and sys.argv[1].isdigit():
         port = int(sys.argv[1])
-    print(f"✨ Server binding to 0.0.0.0:{port} (PORT env={os.environ.get('PORT')})", flush=True)
+    print(f"✨ Server startup on 0.0.0.0:{port} (PORT env={os.environ.get('PORT')})", flush=True)
     run_server(port)
 
