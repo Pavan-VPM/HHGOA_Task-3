@@ -17,7 +17,7 @@ from blockchain.evm_client import EVMClient
 from pipeline.verifier import Verifier
 from pipeline.face_engine import FaceEngine
 
-PORT = 3000
+PORT = int(os.environ.get("PORT", 3000))
 WEB_DIR = os.path.join(os.path.dirname(__file__), "web")
 SAMPLES_DIR = os.path.join(os.path.dirname(__file__), "samples")
 
