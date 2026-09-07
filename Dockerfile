@@ -1,5 +1,8 @@
 FROM python:3.10-slim
 
+ENV PYTHONUNBUFFERED=1
+ENV PORT=3000
+
 # Install system dependencies required by OpenCV (cv2) and cryptography/gcc
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
@@ -21,4 +24,4 @@ COPY . .
 
 # Expose port and start HTTP server
 EXPOSE 3000
-CMD ["python", "server.py"]
+CMD ["python", "-u", "server.py"]
