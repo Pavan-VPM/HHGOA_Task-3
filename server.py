@@ -10,6 +10,11 @@ import os
 import sys
 import base64
 from typing import Dict, Any
+from main import run_pipeline, DEFAULT_STATE_FILE
+from blockchain.evm_client import EVMClient
+from pipeline.verifier import Verifier
+from pipeline.face_engine import FaceEngine
+
 try:
     from http.server import ThreadingHTTPServer as HTTPServerClass, SimpleHTTPRequestHandler
 except ImportError:
