@@ -9,6 +9,7 @@ import mimetypes
 import os
 import sys
 import base64
+from typing import Dict, Any
 try:
     from http.server import ThreadingHTTPServer as HTTPServerClass, SimpleHTTPRequestHandler
 except ImportError:
