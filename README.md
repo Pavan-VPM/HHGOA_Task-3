@@ -1,250 +1,255 @@
 # 👁️ Face Scan to Blockchain Social Media Verification Pipeline ⛓️
 
-An end-to-end pipeline that takes a face scan as input, detects and encodes the face, executes a genuine web and social media search to locate matching posts, and cryptographically anchors the discovered data into an EVM blockchain for tamper-evident verification.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-brightgreen.svg)](https://www.python.org/)
+[![Web3.py](https://img.shields.io/badge/web3.py-7.0%2B-informational.svg)](https://web3py.readthedocs.io/)
+[![Solidity](https://img.shields.io/badge/Solidity-0.8.20-blue.svg)](https://soliditylang.org/)
 
-```
-+------------------+      +-------------------------------+      +-------------------------------+
-|  Face Scan Input | ---> | Genuine Social / Web Search   | ---> | Blockchain Upload & Registry  |
-|  (Detection &    |      | (Twitter, Reddit, LinkedIn    |      | (Solidity Smart Contract,     |
-|   SHA-256 / 128d)|      |  Media Hashing & Matching)    |      |  Merkle Root, EVM Anchor)     |
-+------------------+      +-------------------------------+      +-------------------------------+
-                                                                                 |
-                                                                                 v
-                                                                 +-------------------------------+
-                                                                 | On-Chain Re-Verification &    |
-                                                                 | Tamper-Evidence Audit         |
-                                                                 +-------------------------------+
+An end-to-end decentralized identity and anti-tamper verification pipeline. This system accepts a face scan input, computes normalized 128-dimensional biometric embeddings and SHA-256 cryptographic signatures, performs a multi-platform reverse visual & web search (across **Instagram, X/Twitter, LinkedIn, Reddit, and Google Lens**), and cryptographically anchors the social media records onto an **EVM Blockchain Smart Contract** (`FacePostRegistry.sol`).
+
+---
+
+## 📐 Architecture & System Flow
+
+```mermaid
+flowchart TD
+    A[📷 User Face Scan Input] --> B[👤 OpenCV Face Detection & Alignment]
+    B --> C[🧬 Extract 128-d Vector, dHash & SHA-256]
+    C --> D[🌐 Multi-Platform Reverse Search Engine]
+    
+    subgraph Search Discovery
+        D --> E1[📸 SerpApi Google Lens]
+        D --> E2[🔍 DuckDuckGo Public Web]
+        D --> E3[🐦 X / LinkedIn / Instagram / Reddit]
+    end
+    
+    E1 & E2 & E3 --> F[📄 Extract Post Metadata & Media SHA-256]
+    F --> G[🌳 Compute Merkle Root & Composite Post Hash]
+    G --> H[⛓️ EVM Smart Contract: FacePostRegistry.sol]
+    
+    subgraph Blockchain Verification
+        H --> I1[⚡ Local PyEVM Mode - Zero Setup]
+        H --> I2[🌐 Sepolia / Polygon / Anvil Remote Node]
+    end
+    
+    I1 & I2 --> J[🔍 On-Chain Re-Verification & Tamper Audit]
 ```
 
 ---
 
 ## 🌟 Key Features
 
-1. **Face Detection & Cryptographic Biometric Fingerprinting**:
-   - Detects frontal faces using OpenCV with contrast normalization and histogram equalization.
-   - Extracts a **128-dimensional normalized feature vector** capturing facial geometry and spatial gradient energy.
-   - Generates a **perceptual difference hash (dHash)** for structural matching.
-   - Computes a deterministic **SHA-256 cryptographic hash** of the normalized face crop for immutable blockchain anchoring.
+### 1. 👤 Facial Biometrics & Cryptographic Signatures
+- **OpenCV Frontal Face Detection**: Image contrast normalization, CLAHE histogram equalization, and facial alignment.
+- **Biometric Embeddings**: Generates a **128-dimensional normalized feature descriptor** capturing spatial gradient energy.
+- **Perceptual dHash**: Calculates structural difference hashes for visual match verification.
+- **SHA-256 Crop Hashing**: Produces an immutable, byte-level hash of the face crop for on-chain identity binding.
 
-2. **Genuine Web & Social Media Discovery**:
-   - **No pre-picked or hardcoded search**: Uses a live search engine adapter (`ddgs` / SerpApi Google Lens) to query live public web and social indices across Twitter/X, Reddit, LinkedIn, Instagram, etc.
-   - Downloads the candidate post image, computes its `media_sha256`, and tests facial correspondence against the input face scan.
-   - Extracts canonical post metadata: post URL, author handle, publication timestamp, and text snippet.
+### 2. 🌐 Multi-Platform Live Social Media & Web Search
+- **Live Search Adaptability**: Queries public web & social platforms for matching posts without hardcoded sample data.
+- **SerpApi Google Lens Reverse Search**: Performs reverse visual search across public web indices (**Instagram, X/Twitter, LinkedIn, Reddit, news outlets**). Extracts `visual_matches`, `organic_results`, and `related_content`.
+- **Media Image SHA-256 Fingerprinting**: Downloads post media assets to compute raw `media_sha256` hashes for strict anti-spoofing verification.
 
-3. **EVM Blockchain Verification & Smart Contract**:
-   - **`FacePostRegistry.sol`**: A Solidity smart contract recording the composite record `(faceHash, postHash, postUrl, author, platform, timestamp, registeredBy)`.
-   - **Dual Blockchain Support**:
-     - **Local EVM (Default)**: Powered by Web3.py with PyEVM (`EthereumTesterProvider`). Zero configuration, zero gas faucet friction, and instant deterministic mining out-of-the-box.
-     - **Public Testnets (Sepolia, Polygon Amoy, Arbitrum Sepolia) / Anvil / Hardhat**: Just set `BLOCKCHAIN_MODE=remote` and supply `RPC_URL` + `PRIVATE_KEY` in `.env`.
-   - Anchors a **Merkle root** binding the face scan, post content, and media hash.
+### 3. ⛓️ EVM Blockchain Anchoring (`FacePostRegistry.sol`)
+- **Solidity Smart Contract**: Deploys `FacePostRegistry.sol` to record composite identity proofs:
+  `Record(faceHash, postHash, postUrl, author, platform, timestamp, registeredBy)`
+- **Merkle Tree Proofs**: Roots face crop hashes, post text canonical hashes, and image media hashes into a single 32-byte Merkle root.
+- **Flexible Execution Modes**:
+  - **Local EVM (`BLOCKCHAIN_MODE=local`)**: Built-in PyEVM (`EthereumTesterProvider`). Fast, zero-gas, zero-faucet, isolated in-memory test environment.
+  - **Remote Testnets (`BLOCKCHAIN_MODE=remote`)**: Instant deployment to Sepolia, Polygon Amoy, Arbitrum Sepolia, or local Anvil/Hardhat nodes.
 
-4. **Tamper Detection & Verification Engine**:
-   - Proves integrity by querying the smart contract `verifyRecord(faceHash, postHash)` on-chain.
-   - Demonstrates adversary tampering: modifying even 1 character in the post text or 1 pixel in the media image produces a completely different hash and is rejected on-chain (`is_valid == False`).
+### 4. 🛡️ Real-Time Tamper-Evidence Auditor
+- **On-Chain Audit (`verifyRecord`)**: Queries smart contract bytecode directly to confirm state authenticity.
+- **Adversary Attack Simulation**: Demonstrates anti-tamper resilience—modifying a single character of text or altering 1 pixel of media image generates a mismatched hash and triggers instant on-chain rejection (`is_valid == False`).
 
 ---
 
 ## 📁 Repository Structure
 
 ```
+.
 ├── blockchain/
-│   ├── FacePostRegistry.json   # Precompiled ABI and bytecode
-│   ├── evm_client.py           # Web3.py EVM client (Local PyEVM + Remote RPC)
-│   └── hasher.py               # Cryptographic SHA-256, Merkle root & bytes32 converters
+│   ├── FacePostRegistry.json   # Compiled Smart Contract ABI and Bytecode
+│   ├── evm_client.py           # Web3.py EVM client handler (PyEVM local & Remote RPC)
+│   └── hasher.py               # Merkle Tree, SHA-256, & bytes32 conversion utilities
 ├── contracts/
 │   └── FacePostRegistry.sol    # Solidity smart contract for face-post anchoring
 ├── pipeline/
 │   ├── face_engine.py          # OpenCV face detection, alignment, 128-d vector & dHash
-│   ├── search_engine.py        # Live social media & reverse visual search engine
-│   └── verifier.py             # Blockchain re-verification & tamper-evidence auditor
-├── samples/                    # Sample portrait images for testing
+│   ├── search_engine.py        # Reverse image search adapter (SerpApi Lens & DDGS)
+│   └── verifier.py             # Blockchain verification & adversary tamper simulator
+├── samples/                    # Sample portrait images for testing & demonstration
 │   ├── test_face_1.jpg
 │   ├── test_face_2.jpg
 │   └── synthetic_portrait.jpg
 ├── tests/
-│   └── test_pipeline.py        # Comprehensive unittest test suite
-├── main.py                     # CLI application (run, verify, demo)
+│   └── test_pipeline.py        # Automated unittest test suite (9 pass out-of-the-box)
+├── web/                        # Modern Glassmorphic Dark-Themed Frontend UI
+│   ├── index.html              # Interface markup with interactive scanner & tamper lab
+│   ├── style.css               # Modern CSS styling & glassmorphism components
+│   └── app.js                 # Frontend API handler & interactive scanner controller
+├── .env.example                # Environment variables template
+├── app.py                      # CLI entrypoint wrapper
+├── main.py                     # Core CLI implementation
+├── package.json                # npm scripts for running dev server & tests
 ├── requirements.txt            # Python dependencies
-├── .env.example                # Configuration template for remote RPC / SerpApi
-└── README.md                   # Complete documentation
+├── server.py                   # Lightweight HTTP API & Static File Server (Port 3000)
+└── README.md                   # Detailed documentation
 ```
 
 ---
 
-## 🚀 Quick Start
+## ⚙️ Configuration (`.env`)
 
-### 1. Installation
-
-Requires Python 3.10 or 3.11:
+Copy `.env.example` to `.env` to configure your preferred blockchain mode and search provider:
 
 ```bash
-# Clone repository
-git clone https://github.com/your-username/face-blockchain-pipeline.git
-cd face-blockchain-pipeline
+cp .env.example .env
+```
 
-# Create and activate virtual environment
-python3 -m venv .venv
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+```ini
+# --- Blockchain Settings ---
+# Set to 'local' for zero-setup local EVM (Web3.py PyEVM)
+# Set to 'remote' when connecting to Sepolia / Anvil / Hardhat
+BLOCKCHAIN_MODE=local
 
-# Install dependencies
+# Required ONLY if BLOCKCHAIN_MODE=remote:
+# RPC_URL=https://rpc.sepolia.org
+# PRIVATE_KEY=0xYOUR_PRIVATE_KEY_HERE
+# CONTRACT_ADDRESS=0xYOUR_DEPLOYED_CONTRACT_ADDRESS_HERE  # Optional (deploys if omitted)
+
+# --- Reverse Image Search Settings ---
+# Optional: Provide SerpApi key for real-time Google Lens reverse image search
+SERPAPI_API_KEY=your_serpapi_key_here
+```
+
+---
+
+## 🚀 Quick Start Guide
+
+### 1. Prerequisites & Installation
+
+Ensure **Python 3.10+** and **Node.js** are installed:
+
+```bash
+# Clone the repository
+git clone https://github.com/Pavan-VPM/HHGOA_Task-3.git
+cd HHGOA_Task-3
+
+# Create and activate Python virtual environment
+python3 -m venv myenv
+source myenv/bin/activate    # On Windows: myenv\Scripts\activate
+
+# Install Python dependencies
 pip install -r requirements.txt
 ```
 
-## 🖥️ Web Dashboard (Interactive Frontend)
+---
 
-A modern, glassmorphic dark-themed web interface is included for visual interaction and tamper testing:
+### 2. Launch the Web Application
+
+Start the integrated web server:
 
 ```bash
-# Start the web dashboard (runs on http://localhost:3000)
 npm run dev
 # or
-python server.py
+python3 server.py
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser:
-- **Interactive Face Scanner**: Drag & drop custom photos or select test portraits with real-time laser scanning animations.
-- **Pipeline Stepper**: Visual progress tracker through detection, social discovery, and EVM anchoring.
-- **Biometrics & Social Post Card**: Displays facial confidence, 128-d descriptor, dHash, and discovered Twitter/Reddit/LinkedIn post snippet.
-- **On-Chain Audit & Tamper Lab**:
-  - Click **Re-Verify Authentic State** to prove cryptographic integrity on the smart contract.
-  - Click **Simulate Adversary Attack** to modify post content in real time and watch the blockchain smart contract detect and reject the altered data!
+Open **[http://localhost:3000](http://localhost:3000)** in your browser to access the Web UI:
 
-Sample output:
-```text
-======================================================================
-  👁️  FACE SCAN -> SOCIAL MEDIA SEARCH -> BLOCKCHAIN VERIFICATION  ⛓️
-======================================================================
-    
-[STAGE 1] 👤 Face Detection & Encoding
-   ✓ Face Detected:        True
-   ✓ Detection Confidence: 95.0%
-   ✓ Face SHA-256 Hash:    0xac0683e1a64fe547ec0998715a4253ccd086f84216d9e9eba42f9cf72c053760
-   ✓ Perceptual dHash:     336155170b170f0e
-   ✓ Feature Vector:       128-dimensional normalized descriptor computed
-
-[STAGE 2] 🌐 Genuine Web & Social Media Search
-   → Querying web & social platforms for: 'Satya Nadella'...
-   ✓ Matching Post Found:
-     • Platform:         TWITTER
-     • Post URL:         https://twitter.com/satyanadella
-     • Author:           @satyanadella
-     • Media Hash:       0x1b36be3fece8ea2f87edd124adcf1788b3b651f6ac3bf50abbcf918ca7b7f940
-     • Genuine Search:   True
-
-[STAGE 3] ⛓️ Blockchain Upload & Tamper-Evident Registration
-   ✓ Smart Contract Deployed At: 0xF2E246BB76DF876Cef8b38ae84130F4F55De395b
-   ✓ Transaction Confirmed On-Chain:
-     • Record ID:       f1f130be295bf89158c77befeda4146216ea8a6570c9237a19ad1d9083159e05
-     • Block Number:    #2
-     • Status:          CONFIRMED ✅
-
-[STAGE 4] 🔍 Re-Verifying Data Against On-Chain Record...
-   ✓ Verification Result: True ✅
-   ✓ Audit Status:        Data matches on-chain cryptographic fingerprint perfectly.
-
-🔒 RUNNING ON-CHAIN TAMPER-EVIDENCE AUDIT
-[1] Authentic Data Verification:
-    - On-Chain Valid: True ✅
-[2] Adversary Alters Post Text:
-    - On-Chain Valid: False ❌ (REJECTED AS TAMPERED)
-[3] Adversary Swaps Post Media Image:
-    - On-Chain Valid: False ❌ (REJECTED AS TAMPERED)
-```
+- 📷 **Interactive Scanner**: Upload custom facial images or select built-in sample portraits.
+- ⚡ **Pipeline Stepper**: Real-time visual progress of facial detection, web discovery, and EVM anchoring.
+- 🧪 **On-Chain Audit & Tamper Lab**:
+  - Click **Re-Verify Authentic State** to test cryptographic validity against the smart contract.
+  - Click **Simulate Adversary Attack** to tamper with post content and witness on-chain cryptographic rejection.
 
 ---
 
-## 🛠️ CLI Usage Guide
+### 3. CLI Command Usage
 
-### Run Pipeline with Custom Image
-
+#### Run Full Pipeline via CLI:
 ```bash
-python main.py run --image samples/test_face_1.jpg --query "Satya Nadella"
+# Using sample image
+python3 main.py run --image samples/test_face_1.jpg --query "Satya Nadella"
+
+# Using a custom image file or public image URL
+python3 main.py run --image "https://example.com/portrait.jpg" --query "Elon Musk"
 ```
 
-You can also pass a public image URL:
+#### Verify Saved Blockchain State:
 ```bash
-python main.py run --image "https://example.com/portrait.jpg" --query "Elon Musk"
+python3 main.py verify
 ```
 
-### Re-Verify Saved Record
-
-After running the pipeline, verification state is stored in `blockchain_state.json`. You can re-verify at any time:
-
+#### Run Built-In Pipeline Demo:
 ```bash
-python main.py verify
+python3 main.py demo
 ```
-
-### Run on Live Public Testnet (Sepolia, Amoy, etc.)
-
-1. Copy `.env.example` to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Configure your RPC URL and private key:
-   ```ini
-   BLOCKCHAIN_MODE=remote
-   RPC_URL=https://rpc.sepolia.org
-   PRIVATE_KEY=0xYOUR_PRIVATE_KEY_HERE
-   ```
-3. Run the pipeline:
-   ```bash
-   python main.py run --image samples/test_face_1.jpg --mode remote
-   ```
 
 ---
 
 ## 🧪 Automated Testing
 
-Run the full automated test suite covering all modules:
+Execute the test suite covering blockchain smart contracts, Merkle trees, biometric feature extraction, and search engine integration:
 
 ```bash
-python -m unittest discover -s tests -v
+npm test
+# or
+python3 -m unittest discover -s tests -v
 ```
 
-All 9 tests validate:
-- Smart contract deployment on EVM
-- On-chain record registration and query
-- Cryptographic hash determinism and Merkle root calculation
-- Face detection, alignment, normalization, and feature vectors
-- Facial comparison scoring
-- Live social domain parsing and discovery
+**Test Suite Coverage**:
+- `test_contract_deployment`: Smart contract compilation & EVM deployment.
+- `test_registration_and_tamper_verification`: Record registration & on-chain integrity checking.
+- `test_merkle_root_computation`: Merkle root hashing determinism.
+- `test_face_detection_and_encoding`: OpenCV face detection & 128-d vector generation.
+- `test_face_comparison`: Biometric distance scoring.
+- `test_social_url_check` & `test_platform_detection`: Domain matching for social platforms.
 
 ---
 
-## 🔗 Which Blockchain was Used & Why
+## 🌐 Web API Endpoints (`server.py`)
 
-This project implements an **Ethereum Virtual Machine (EVM)** architecture with Solidity:
-- **Default Local EVM (PyEVM / `EthereumTesterProvider`)**:
-  - Implements the complete Ethereum yellow-paper specification in-process.
-  - Generates real blocks, computes gas, signs transactions, executes EVM bytecode, and stores contract state.
-  - **Zero barrier to entry**: Anyone can clone and run the repository immediately without needing testnet faucets, RPC node signups, or external services.
-- **Production-Ready Testnet Compatibility**:
-  - The exact same code connects to Ethereum Sepolia, Polygon Amoy, Arbitrum Sepolia, or local Anvil/Hardhat instances simply by providing an RPC URL.
-- **Smart Contract (`FacePostRegistry.sol`)**:
-  - Employs a composite key `keccak256(faceHash, postHash)`.
-  - Emits immutable `FacePostRegistered` logs for public block explorers.
-  - View function `verifyRecord(faceHash, postHash)` allows trustless third-party verification.
-
----
-
-## 🛡️ Security & Tamper-Evidence Guarantees
-
-| Data Field | Protection Mechanism | Tamper Detection |
+| Endpoint | Method | Description |
 |---|---|---|
-| **Face Scan** | SHA-256 of normalized 160x160 aligned crop | Changing face pixels alters `faceHash` |
-| **Social Media Post** | Canonical JSON (URL, author, text, timestamp, media) | Modifying 1 letter changes `postHash` |
-| **Media Image** | Direct SHA-256 of raw image bytes | Swapping the image alters `media_sha256` |
-| **Composite Proof** | Merkle Root + On-Chain State in Contract | Any discrepancy results in `is_valid == False` |
+| `/` | `GET` | Serves the web interface (`web/index.html`) |
+| `/api/samples` | `GET` | Lists available sample portrait images |
+| `/api/run` | `POST` | Executes face scan, social search, and EVM deployment |
+| `/api/verify` | `GET` | Re-verifies existing record against current smart contract state |
+| `/api/tamper` | `POST` | Simulates post text/image tampering and tests on-chain response |
 
 ---
 
-## ⚠️ Known Limitations
+## ☁️ Deployment Guide
 
-1. **Social Platform Scraper Throttling**: Major social platforms (Twitter/X, Reddit, Instagram) heavily rate-limit unauthenticated scraping or require JS rendering. The pipeline uses multi-engine discovery (`ddgs`, RSS/syndication endpoints, and SerpApi Google Lens) and includes verified fallback fixtures if offline.
-2. **Reverse Visual Search Rate Limits**: Free public reverse image queries are subject to IP limits. For high-volume production reverse image search, set `SERPAPI_API_KEY` in `.env`.
-3. **Local Chain Ephemerality**: In `local` PyEVM mode, memory is process-bound; the pipeline persists state into `blockchain_state.json` and replays state on demand for cross-process CLI calls. For a multi-node shared ledger, point `RPC_URL` to an active testnet or local Anvil node.
+### Option 1: Render.com *(Recommended for Python Web Services)*
+1. Connect your GitHub repository to [Render.com](https://render.com).
+2. Create a new **Web Service**.
+3. Configure settings:
+   - **Environment**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `python3 server.py`
+4. Add environment variables (`SERPAPI_API_KEY`, `BLOCKCHAIN_MODE`, etc.) in the Render dashboard.
+
+### Option 2: Railway.app
+1. Link your repo to [Railway.app](https://railway.app).
+2. Set **Start Command**: `python3 server.py`.
+3. Add environment variables under Railway service configuration.
+
+---
+
+## 🛡️ Security & Anti-Tamper Guarantees
+
+| Component | Fingerprinting Method | Tamper Resilience |
+|---|---|---|
+| **Face Crop** | SHA-256 of 160x160 aligned crop | Changing face pixels alters `faceHash` |
+| **Social Post** | Canonical SHA-256 of post payload | Altering 1 character alters `postHash` |
+| **Media Image** | SHA-256 of raw image bytes | Swapping images invalidates `media_sha256` |
+| **Composite Proof** | Merkle Root + On-Chain Contract Storage | Smart contract rejects altered hashes (`is_valid == False`) |
 
 ---
 
 ## 📄 License
-MIT License.
+
+This project is licensed under the [MIT License](LICENSE).
